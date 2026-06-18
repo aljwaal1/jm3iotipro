@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -181,21 +182,21 @@ class JamiyatiApp extends StatelessWidget {
         ),
         chipTheme: ChipThemeData(
           backgroundColor: AC.card2,
-          selectedColor: AC.primary.withOpacity(0.25),
+          selectedColor: AC.primary.withValues(alpha: 0.25),
           labelStyle: const TextStyle(color: AC.text, fontSize: 12),
           side: const BorderSide(color: AC.border),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
         navigationBarTheme: NavigationBarThemeData(
           backgroundColor: AC.surface,
-          indicatorColor: AC.primary.withOpacity(0.18),
+          indicatorColor: AC.primary.withValues(alpha: 0.18),
           labelTextStyle: WidgetStateProperty.all(
             const TextStyle(color: AC.muted, fontSize: 11),
           ),
         ),
       ),
       home: const Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: ui.TextDirection.rtl,
         child: HomePage(),
       ),
     );
@@ -372,7 +373,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(colors: [AC.primary, AC.teal]),
                     borderRadius: BorderRadius.circular(28),
-                    boxShadow: [BoxShadow(color: AC.primary.withOpacity(0.4), blurRadius: 24, offset: const Offset(0, 8))],
+                    boxShadow: [BoxShadow(color: AC.primary.withValues(alpha: 0.4), blurRadius: 24, offset: const Offset(0, 8))],
                   ),
                   child: const Icon(Icons.savings_rounded, color: Colors.white, size: 44),
                 ),
@@ -429,7 +430,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: AC.primary.withOpacity(0.18),
+                  color: AC.primary.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -592,7 +593,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 Container(
                   width: 40, height: 40,
                   decoration: BoxDecoration(
-                    color: AC.teal.withOpacity(0.15),
+                    color: AC.teal.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.savings_rounded, color: AC.teal, size: 20),
@@ -634,9 +635,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
+          color: color.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Column(
           children: [
@@ -700,7 +701,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         decoration: BoxDecoration(
           color: AC.card,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isFullPaid ? AC.teal.withOpacity(0.4) : AC.border),
+          border: Border.all(color: isFullPaid ? AC.teal.withValues(alpha: 0.4) : AC.border),
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -712,7 +713,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   Container(
                     width: 44, height: 44,
                     decoration: BoxDecoration(
-                      color: AC.primary.withOpacity(0.15),
+                      color: AC.primary.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Center(
@@ -799,7 +800,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -850,7 +851,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       ),
       child: Column(
         children: [
-          Icon(icon, size: 48, color: AC.primary.withOpacity(0.5)),
+          Icon(icon, size: 48, color: AC.primary.withValues(alpha: 0.5)),
           const SizedBox(height: 12),
           Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
           const SizedBox(height: 6),
@@ -876,7 +877,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             Container(
               width: 38, height: 38,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
+                color: color.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(11),
               ),
               child: Icon(icon, color: color, size: 20),
@@ -926,7 +927,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Future<void> _openDetails(Association a) async {
     await Navigator.push(context, MaterialPageRoute(
       builder: (_) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: ui.TextDirection.rtl,
         child: DetailsPage(
           association: a, currency: currency,
           isPaid: isPaid, setPaid: setPaid,
@@ -959,7 +960,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx2, setS) => Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: ui.TextDirection.rtl,
           child: AlertDialog(
             backgroundColor: AC.card,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -1094,7 +1095,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     return showDialog<String>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: ui.TextDirection.rtl,
         child: AlertDialog(
           backgroundColor: AC.card,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -1192,7 +1193,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       const cardColor = PdfColor.fromInt(0xFF1A2235);
       const tealColor = PdfColor.fromInt(0xFF2DD4BF);
       const amberColor = PdfColor.fromInt(0xFFFBBF24);
-      const roseColor = PdfColor.fromInt(0xFFF87171);
       const textColor = PdfColor.fromInt(0xFFF0F4FF);
       const mutedColor = PdfColor.fromInt(0xFF8B9DC3);
 
@@ -1275,17 +1275,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 pw.Container(
                   height: 8,
                   decoration: pw.BoxDecoration(
-                    color: cardColor,
+                    color: a.members.isEmpty || paid == 0 ? cardColor : tealColor,
                     borderRadius: pw.BorderRadius.circular(4),
-                  ),
-                  child: pw.FractionallySizedBox(
-                    widthFactor: a.members.isEmpty ? 0 : paid / a.members.length,
-                    child: pw.Container(
-                      decoration: pw.BoxDecoration(
-                        color: tealColor,
-                        borderRadius: pw.BorderRadius.circular(4),
-                      ),
-                    ),
                   ),
                 ),
               ],
@@ -1424,7 +1415,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       final controller = ScreenshotController();
 
       final widget = Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: ui.TextDirection.rtl,
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
           home: Scaffold(
@@ -1581,7 +1572,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       Container(
                         width: 30, height: 30,
                         decoration: BoxDecoration(
-                          color: p ? AC.teal.withOpacity(0.15) : AC.amber.withOpacity(0.15),
+                          color: p ? AC.teal.withValues(alpha: 0.15) : AC.amber.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Center(
@@ -1597,7 +1588,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: p ? AC.teal.withOpacity(0.15) : AC.amber.withOpacity(0.15),
+                          color: p ? AC.teal.withValues(alpha: 0.15) : AC.amber.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -1905,7 +1896,7 @@ class _DetailsPageState extends State<DetailsPage> {
                         Container(
                           width: 36, height: 36,
                           decoration: BoxDecoration(
-                            color: p ? AC.teal.withOpacity(0.15) : AC.amber.withOpacity(0.1),
+                            color: p ? AC.teal.withValues(alpha: 0.15) : AC.amber.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Center(
@@ -1936,7 +1927,7 @@ class _DetailsPageState extends State<DetailsPage> {
                           ),
                         Switch(
                           value: p,
-                          activeColor: AC.teal,
+                          activeThumbColor: AC.teal,
                           onChanged: (v) async {
                             await widget.setPaid(a, selMonth, m, v);
                             setState(() {});
@@ -1967,7 +1958,7 @@ class _DetailsPageState extends State<DetailsPage> {
                   Container(
                     width: 36, height: 36,
                     decoration: BoxDecoration(
-                      color: AC.primary.withOpacity(0.12),
+                      color: AC.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(Icons.person_add_rounded, color: AC.primary, size: 18),
@@ -1997,7 +1988,7 @@ class _DetailsPageState extends State<DetailsPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
+          color: Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -2017,9 +2008,9 @@ class _DetailsPageState extends State<DetailsPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.10),
+          color: color.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -2039,7 +2030,7 @@ class _DetailsPageState extends State<DetailsPage> {
     final saved = await showDialog<bool>(
       context: context,
       builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: ui.TextDirection.rtl,
         child: AlertDialog(
           backgroundColor: AC.card,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -2086,7 +2077,7 @@ class _DetailsPageState extends State<DetailsPage> {
       final ok = await showDialog<bool>(
         context: context,
         builder: (ctx) => Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: ui.TextDirection.rtl,
           child: AlertDialog(
             backgroundColor: AC.card,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
