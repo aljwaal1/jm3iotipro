@@ -45,6 +45,45 @@ jobs:
       - name: Get packages
         run: flutter pub get
 
+      - name: Emergency source compatibility fixes
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("lib/main.dart")
+          s = p.read_text(encoding="utf-8")
+          if "import 'dart:ui' as ui;" not in s:
+              s = s.replace("import 'dart:typed_data';\n", "import 'dart:typed_data';\nimport 'dart:ui' as ui;\n")
+              if "import 'dart:typed_data';\n" not in s and "import 'dart:ui' as ui;" not in s:
+                  s = "import 'dart:ui' as ui;\n" + s
+          s = s.replace("textDirection: TextDirection.rtl", "textDirection: ui.TextDirection.rtl")
+          import re
+          s = re.sub(r"\.withOpacity\(([^)]+)\)", r".withValues(alpha: \1)", s)
+          s = s.replace("activeColor: AC.teal,", "activeThumbColor: AC.teal,")
+          s = s.replace("value: selectedMonth,", "initialValue: selectedMonth,")
+          s = s.replace("      const roseColor = PdfColor.fromInt(0xFFF87171);\n", "")
+          s = s.replace("const roseColor = PdfColor.fromInt(0xFFF87171);\n", "")
+          needle = "child: pw.FractionallySizedBox("
+          while needle in s:
+              start = s.index(needle)
+              open_pos = s.index("(", start)
+              depth = 0
+              end = open_pos
+              for i in range(open_pos, len(s)):
+                  ch = s[i]
+                  if ch == "(":
+                      depth += 1
+                  elif ch == ")":
+                      depth -= 1
+                      if depth == 0:
+                          end = i + 1
+                          break
+              if s[end:end+1] == ",":
+                  end += 1
+              s = s[:start] + "child: pw.Container()," + s[end:]
+          p.write_text(s, encoding="utf-8")
+          PY
+
       - name: Configure Android app (minSdk + applicationId)
         shell: bash
         run: |
