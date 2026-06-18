@@ -1,7 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -231,9 +228,9 @@ class _MainScreenState extends State<MainScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.account_balance_wallet, size: 64, color: AppColor.muted.withOpacity(0.5)),
+                      Icon(Icons.account_balance_wallet, size: 64, color: AppColor.muted.withAlpha(128)),
                       const SizedBox(height: 16),
-                      Text('لا توجد جمعيات حالية', style: TextStyle(color: AppColor.muted, fontSize: 16)),
+                      const Text('لا توجد جمعيات حالية', style: TextStyle(color: AppColor.muted, fontSize: 16)),
                     ],
                   ),
                 )
@@ -259,7 +256,7 @@ class _MainScreenState extends State<MainScreen> {
                           ),
                         ),
                         trailing: const Icon(Icons.arrow_forward_ios, color: AppColor.primary, size: 18),
-                        onPressed: () async {
+                        onTap: () async {
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -335,7 +332,7 @@ class _MainScreenState extends State<MainScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'اسم الجمعية')),
-              TextField(controller: amountCtrl, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: 'القسط الشهري ($currency)')),
+              TextField(controller: amountCtrl, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: 'القسط الشهري')),
               TextField(controller: monthsCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'عدد الأشهر (المدة)')),
               TextField(
                 controller: membersCtrl,
@@ -568,7 +565,8 @@ class _AssociationDetailsScreenState extends State<AssociationDetailsScreen> {
                         ),
                         Switch(
                           value: isPaid,
-                          activeColor: AppColor.primary,
+                          activeTrackColor: AppColor.primary,
+                          activeThumbColor: Colors.white,
                           onChanged: (val) async {
                             HapticFeedback.lightImpact();
                             setState(() {
@@ -612,7 +610,7 @@ class _AssociationDetailsScreenState extends State<AssociationDetailsScreen> {
           return pw.Directionality(
             textDirection: pw.TextDirection.rtl,
             child: pw.Column(
-              cross: pw.CrossAxisAlignment.start,
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Center(
                   child: pw.Text('تقرير كشف حساب: ${widget.association.name}', style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold, color: PdfColors.teal)),
@@ -637,91 +635,4 @@ class _AssociationDetailsScreenState extends State<AssociationDetailsScreen> {
                   }).toList(),
                   headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white),
                   headerDecoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFF10B981)),
-                  cellAlignment: pw.Alignment.centerRight,
-                  cellPadding: const pw.EdgeInsets.all(8),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-
-    await Printing.sharePdf(bytes: await pdf.save(), filename: 'كشف_${widget.association.name}.pdf');
-  }
-
-  Future<void> exportQuickPNG() async {
-    try {
-      final directory = (await getApplicationDocumentsDirectory()).path;
-      final imagePath = await screenshotController.captureAndSave(
-        directory,
-        fileName: 'quick_status.png',
-      );
-      if (imagePath != null) {
-        await Share.shareXFiles([XFile(imagePath)], text: 'ملخص حالة شهر لجمعية ${widget.association.name}');
-      }
-    } catch (_) {}
-  }
-
-  Future<void> confirmDelete() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: AppColor.card2,
-          title: const Text('حذف الجمعية'),
-          content: const Text('هل أنت متأكد من رغبتك في حذف هذه الجمعية نهائياً؟ لا يمكن التراجع عن هذا الإجراء.'),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('إلغاء', style: TextStyle(color: AppColor.muted))),
-            FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: AppColor.red),
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('حذف'),
-            ),
-          ],
-        );
-      },
-    );
-    if (ok == true) {
-      await widget.deleteAssociation(widget.association);
-      if (mounted) {
-        Navigator.pop(context);
-      }
-    }
-  }
-
-  Future<void> sendWhatsapp(Member member) async {
-    final text = 'السلام عليكم ${member.name}\n'
-        'تذكير بدفع قسط جمعية: ${widget.association.name}\n'
-        'الشهر: ${widget.monthLabel(widget.association, selectedMonth)}\n'
-        'المبلغ المستحق: ${formatNumber(widget.association.amount)} ${widget.currency}\n'
-        'وشكرًا جزيلًا.';
-    final encoded = Uri.encodeComponent(text);
-    final cleanPhone = member.phone.replaceAll(RegExp(r'[^0-9+]'), '');
-    final uri = cleanPhone.isEmpty
-        ? Uri.parse('https://wa.me/?text=$encoded')
-        : Uri.parse('https://wa.me/$cleanPhone?text=$encoded');
-    
-    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!opened) {
-      await Clipboard.setData(ClipboardData(text: text));
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم نسخ نص التذكير إلى الحافظة لعدم توفر تطبيق واتساب')));
-      }
-    }
-  }
-}
-
-BoxDecoration roundedBox(Color color, double radius) {
-  return BoxDecoration(
-    color: color,
-    borderRadius: BorderRadius.circular(radius),
-  );
-}
-
-String formatNumber(num value) {
-  if (value == value.toInt()) {
-    return value.toInt().toString();
-  }
-  return value.toStringAsFixed(2);
-}
+                  cellAlignment:
