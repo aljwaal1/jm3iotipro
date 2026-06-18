@@ -8,7 +8,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-// حزم التقارير والكشوفات الجديدة
+// حزم التقارير والكشوفات
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -21,17 +21,17 @@ void main() {
   runApp(const JamiyatiApp());
 }
 
-// ثيم ألوان مالي عصري واحترافي (Emerald Rich Theme)
+// ثيم الألوان المالي الزمردي
 class AppColor {
-  static const Color bg = Color(0xFF09120E);       // خلفية داكنة مائلة للأخضر العميق
-  static const Color card = Color(0xFF12241C);     // بطاقات زمردية داكنة
-  static const Color card2 = Color(0xFF1A3328);    // تدرج ثاني للبطاقات
-  static const Color text = Color(0xFFF1F7F4);     // نص أبيض ناصع ومريح للعين
-  static const Color muted = Color(0xFF8FA399);    // نصوص فرعية رمادية مخضرة
-  static const Color primary = Color(0xFF10B981);  // الأخضر الزمردي الأساسي للأزرار والعمليات الناجحة
-  static const Color accent = Color(0xFF34D399);   // لون مميز للتحديدات
-  static const Color amber = Color(0xFFF59E0B);    // للتنبيهات والأقساط المتأخرة
-  static const Color red = Color(0xFFEF4444);      // للعمليات الحرجة والحذف
+  static const Color bg = Color(0xFF09120E);
+  static const Color card = Color(0xFF12241C);
+  static const Color card2 = Color(0xFF1A3328);
+  static const Color text = Color(0xFFF1F7F4);
+  static const Color muted = Color(0xFF8FA399);
+  static const Color primary = Color(0xFF10B981);
+  static const Color accent = Color(0xFF34D399);
+  static const Color amber = Color(0xFFF59E0B);
+  static const Color red = Color(0xFFEF4444);
 }
 
 class JamiyatiApp extends StatelessWidget {
