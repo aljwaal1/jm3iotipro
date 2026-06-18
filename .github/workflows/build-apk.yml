@@ -38,7 +38,9 @@ jobs:
         run: flutter create --platforms=android --org com.explapp --no-pub .
 
       - name: Remove generated sample tests
-        run: rm -rf test
+        run: |
+          rm -rf test
+          rm -f analysis_options.yaml
 
       - name: Get packages
         run: flutter pub get
@@ -126,6 +128,7 @@ jobs:
       - name: Analyze
         run: |
           rm -rf test
+          rm -f analysis_options.yaml
           flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Build release APK
