@@ -9,6 +9,9 @@ on:
     paths-ignore:
       - "apk/**"
       - "DOWNLOAD_APK.md"
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -140,6 +143,7 @@ jobs:
         run: flutter build apk --release --no-tree-shake-icons
 
       - name: Copy APK to repository folder
+        if: github.event_name != 'pull_request'
         run: |
           mkdir -p apk
           cp build/app/outputs/flutter-apk/app-release.apk apk/jamiyati.apk
@@ -158,6 +162,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Commit APK
+        if: github.event_name != 'pull_request'
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
