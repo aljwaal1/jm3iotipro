@@ -128,7 +128,7 @@ class Association {
 
   void normalize() {
     monthsCount = max(1, monthsCount);
-    dueDay = dueDay.clamp(1, 28);
+    dueDay = dueDay.clamp(1, 28).toInt();
     for (var i = 0; i < members.length; i++) {
       if (members[i].turn <= 0) members[i].turn = i + 1;
     }
@@ -160,7 +160,7 @@ class Association {
 
   Member? receiverFor(int roundIndex) {
     if (members.isEmpty || receiverOrder.isEmpty) return null;
-    final idx = roundIndex.clamp(0, receiverOrder.length - 1);
+    final idx = roundIndex.clamp(0, receiverOrder.length - 1).toInt();
     return memberById(receiverOrder[idx]);
   }
 
@@ -171,7 +171,7 @@ class Association {
       .fold<double>(0, (sum, item) => sum + item.amount);
 
   double deliveryRemaining(int roundIndex) =>
-      max(0, roundTotal - deliveredTotal(roundIndex));
+      max(0, roundTotal - deliveredTotal(roundIndex)).toDouble();
 
   Map<String, dynamic> toJson() => {
         'id': id,
