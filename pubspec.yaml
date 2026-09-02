@@ -2,7 +2,7 @@ name: jamiyati
 description: Jamiyati Pro - professional rotating savings association manager.
 publish_to: "none"
 
-version: 3.0.0+2
+version: 3.0.0+3
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
