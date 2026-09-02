@@ -103,11 +103,14 @@ class _CreateAssociationPageState extends State<CreateAssociationPage> {
                       child: TextField(
                         controller: _year,
                         keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(labelText: 'السنة'),
+                        onChanged: (_) => setState(() {}),
+                        decoration: const InputDecoration(labelText: 'سنة البداية'),
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 10),
+                _periodPreview(),
                 const SizedBox(height: 10),
                 TextField(
                   controller: _dueDay,
@@ -205,6 +208,45 @@ class _CreateAssociationPageState extends State<CreateAssociationPage> {
             label: Text(_saving ? 'جاري الإنشاء...' : 'إنشاء الجمعية'),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _periodPreview() {
+    final year = int.tryParse(_year.text.trim()) ?? DateTime.now().year;
+    final start = DateTime(year, _month);
+    final end = _members.isEmpty ? null : DateTime(year, _month + _members.length - 1);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AC.primary.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: AC.primary.withValues(alpha: 0.16)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.date_range_rounded, color: AC.primary, size: 21),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'بدء الجمعية: ${_monthName(start.month)} ${start.year}',
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  end == null
+                      ? 'انتهاء الجمعية: يُحسب تلقائيًا بعد إضافة الأعضاء'
+                      : 'انتهاء الجمعية: ${_monthName(end.month)} ${end.year}',
+                  style: const TextStyle(color: AC.muted, fontSize: 10),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
