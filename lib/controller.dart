@@ -10,6 +10,7 @@ import 'models.dart';
 
 class JamiyatiController extends ChangeNotifier {
   static const _pinKey = 'jamiyati_secure_pin';
+  static const int backupVersion = 3;
   final FlutterSecureStorage _secure = const FlutterSecureStorage();
   final LocalAuthentication _auth = LocalAuthentication();
 
@@ -32,8 +33,7 @@ class JamiyatiController extends ChangeNotifier {
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
     try {
-      final raw = prefs.getString('associations') ?? '[]';
-      final decoded = jsonDecode(raw);
+      final decoded = jsonDecode(prefs.getString('associations') ?? '[]');
       final list = <Association>[];
       if (decoded is List) {
         for (final item in decoded) {
@@ -49,10 +49,9 @@ class JamiyatiController extends ChangeNotifier {
 
     paidKeys = (prefs.getStringList('paidKeys') ?? <String>[]).toSet();
     currency = prefs.getString('currency') ?? 'د.أ';
-
+    paidAt = <String, DateTime>{};
     try {
-      final rawPaidAt = prefs.getString('paidAt') ?? '{}';
-      final decoded = jsonDecode(rawPaidAt);
+      final decoded = jsonDecode(prefs.getString('paidAt') ?? '{}');
       if (decoded is Map) {
         decoded.forEach((key, value) {
           final d = DateTime.tryParse('$value');
@@ -72,7 +71,8 @@ class JamiyatiController extends ChangeNotifier {
     unlocked = !pinConfigured;
 
     try {
-      biometricAvailable = await _auth.canCheckBiometrics || await _auth.isDeviceSupported();
+      biometricAvailable =
+          await _auth.canCheckBiometrics || await _auth.isDeviceSupported();
     } catch (_) {
       biometricAvailable = false;
     }
@@ -91,7 +91,7 @@ class JamiyatiController extends ChangeNotifier {
     await prefs.setString('currency', currency);
     await prefs.setString(
       'paidAt',
-      jsonEncode(paidAt.map((key, value) => MapEntry(key, value.toIso8601String()))),
+      jsonEncode(paidAt.map((k, v) => MapEntry(k, v.toIso8601String()))),
     );
   }
 
@@ -104,13 +104,14 @@ class JamiyatiController extends ChangeNotifier {
   DateTime? paymentDate(Association a, int roundIndex, Member m) =>
       paidAt[paymentKey(a, roundIndex, m)];
 
-  Future<void> setPaid(
+  Future<bool> setPaid(
     Association a,
     int roundIndex,
     Member m,
     bool value, {
     DateTime? date,
   }) async {
+    if (a.archived || roundIndex < 0 || roundIndex >= a.monthsCount) return false;
     final key = paymentKey(a, roundIndex, m);
     if (value) {
       paidKeys.add(key);
@@ -123,20 +124,23 @@ class JamiyatiController extends ChangeNotifier {
     }
     await save();
     notifyListeners();
+    return true;
   }
 
-  Future<void> updatePaymentDate(
+  Future<bool> updatePaymentDate(
     Association a,
     int roundIndex,
     Member m,
     DateTime date,
   ) async {
+    if (a.archived) return false;
     final key = paymentKey(a, roundIndex, m);
-    if (!paidKeys.contains(key)) return;
+    if (!paidKeys.contains(key)) return false;
     paidAt[key] = date;
     addActivity(a, 'تم تعديل تاريخ دفع ${m.name} للدور ${roundIndex + 1}');
     await save();
     notifyListeners();
+    return true;
   }
 
   int roundIndexNow(Association a) {
@@ -193,11 +197,7 @@ class JamiyatiController extends ChangeNotifier {
     return DateTime(d.year, d.month, min(a.dueDay, last), 23, 59, 59);
   }
 
-  ContributionStage contributionStage(
-    Association a,
-    int roundIndex,
-    Member m,
-  ) {
+  ContributionStage contributionStage(Association a, int roundIndex, Member m) {
     if (isPaid(a, roundIndex, m)) return ContributionStage.paid;
     if (DateTime.now().isAfter(dueDate(a, roundIndex))) {
       return ContributionStage.late;
@@ -222,8 +222,7 @@ class JamiyatiController extends ChangeNotifier {
   int get totalLate {
     var total = 0;
     for (final a in associations) {
-      if (stageOf(a) != AssociationStage.active) continue;
-      total += lateCount(a, displayRound(a));
+      if (stageOf(a) == AssociationStage.active) total += lateCount(a, displayRound(a));
     }
     return total;
   }
@@ -231,8 +230,7 @@ class JamiyatiController extends ChangeNotifier {
   int get totalWaiting {
     var total = 0;
     for (final a in associations) {
-      if (stageOf(a) != AssociationStage.active) continue;
-      total += waitingCount(a, displayRound(a));
+      if (stageOf(a) == AssociationStage.active) total += waitingCount(a, displayRound(a));
     }
     return total;
   }
@@ -263,11 +261,13 @@ class JamiyatiController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateAssociation(Association a) async {
+  Future<bool> updateAssociation(Association a) async {
+    if (a.archived) return false;
     a.normalize();
     addActivity(a, 'تم تعديل بيانات الجمعية');
     await save();
     notifyListeners();
+    return true;
   }
 
   Future<void> archiveAssociation(Association a, bool value) async {
@@ -285,7 +285,8 @@ class JamiyatiController extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool canChangeStructure(Association a) => stageOf(a) == AssociationStage.upcoming;
+  bool canChangeStructure(Association a) =>
+      !a.archived && stageOf(a) == AssociationStage.upcoming;
 
   int firstChangeableRound(Association a) {
     final idx = roundIndexNow(a);
@@ -294,16 +295,17 @@ class JamiyatiController extends ChangeNotifier {
     return idx;
   }
 
-  Future<bool> swapReceiverRounds(
-    Association a,
-    int firstRound,
-    int secondRound,
-  ) async {
+  bool canSwapReceiverRound(Association a, int roundIndex) {
+    if (a.archived || roundIndex < firstChangeableRound(a)) return false;
+    if (roundIndex < 0 || roundIndex >= a.receiverOrder.length) return false;
+    // Once money was delivered for a round, its receiver is part of the audit history.
+    if (a.deliveryFor(roundIndex).isNotEmpty) return false;
+    return true;
+  }
+
+  Future<bool> swapReceiverRounds(Association a, int firstRound, int secondRound) async {
     if (firstRound == secondRound) return false;
-    final minRound = firstChangeableRound(a);
-    if (firstRound < minRound || secondRound < minRound) return false;
-    if (firstRound < 0 || secondRound < 0) return false;
-    if (firstRound >= a.receiverOrder.length || secondRound >= a.receiverOrder.length) {
+    if (!canSwapReceiverRound(a, firstRound) || !canSwapReceiverRound(a, secondRound)) {
       return false;
     }
     final firstName = a.receiverFor(firstRound)?.name ?? '-';
@@ -335,11 +337,7 @@ class JamiyatiController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> moveMemberBeforeStart(
-    Association a,
-    int oldIndex,
-    int newIndex,
-  ) async {
+  Future<void> moveMemberBeforeStart(Association a, int oldIndex, int newIndex) async {
     if (!canChangeStructure(a)) return;
     if (oldIndex < 0 || oldIndex >= a.members.length) return;
     if (newIndex > oldIndex) newIndex--;
@@ -351,27 +349,29 @@ class JamiyatiController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateMember(
-    Association a,
-    Member m, {
-    required String name,
-    required String phone,
-  }) async {
+  Future<bool> updateMember(Association a, Member m,
+      {required String name, required String phone}) async {
+    if (a.archived) return false;
     m.name = name.trim();
     m.phone = phone.trim();
     addActivity(a, 'تم تعديل بيانات العضو ${m.name}');
     await save();
     notifyListeners();
+    return true;
   }
 
-  Future<void> addDelivery(
+  Future<bool> addDelivery(
     Association a,
     int roundIndex,
     double amount,
     DateTime date, {
     String note = '',
   }) async {
-    if (amount <= 0) return;
+    if (a.archived || amount <= 0 || roundIndex < 0 || roundIndex >= a.monthsCount) {
+      return false;
+    }
+    final remaining = a.deliveryRemaining(roundIndex);
+    if (amount > remaining + 0.005) return false;
     final list = a.deliveries.putIfAbsent('$roundIndex', () => <DeliveryEntry>[]);
     list.add(DeliveryEntry(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
@@ -383,17 +383,17 @@ class JamiyatiController extends ChangeNotifier {
     addActivity(a, 'تم تسجيل تسليم مبلغ إلى $receiver للدور ${roundIndex + 1}');
     await save();
     notifyListeners();
+    return true;
   }
 
-  Future<void> removeDelivery(
-    Association a,
-    int roundIndex,
-    DeliveryEntry entry,
-  ) async {
+  Future<bool> removeDelivery(
+      Association a, int roundIndex, DeliveryEntry entry) async {
+    if (a.archived) return false;
     a.deliveries['$roundIndex']?.removeWhere((e) => e.id == entry.id);
     addActivity(a, 'تم حذف حركة تسليم من الدور ${roundIndex + 1}');
     await save();
     notifyListeners();
+    return true;
   }
 
   void addActivity(Association a, String text) {
@@ -405,9 +405,7 @@ class JamiyatiController extends ChangeNotifier {
         date: DateTime.now(),
       ),
     );
-    if (a.activity.length > 200) {
-      a.activity = a.activity.take(200).toList();
-    }
+    if (a.activity.length > 200) a.activity = a.activity.take(200).toList();
   }
 
   Future<void> setCurrency(String value) async {
@@ -469,31 +467,39 @@ class JamiyatiController extends ChangeNotifier {
 
   Map<String, dynamic> backupMap() => {
         'format': 'jamiyati-pro-backup',
-        'version': 3,
+        'version': backupVersion,
         'createdAt': DateTime.now().toIso8601String(),
         'currency': currency,
         'associations': associations.map((a) => a.toJson()).toList(),
         'paidKeys': paidKeys.toList(),
-        'paidAt': paidAt.map((key, value) => MapEntry(key, value.toIso8601String())),
+        'paidAt': paidAt.map((k, v) => MapEntry(k, v.toIso8601String())),
       };
 
   String backupJson() => const JsonEncoder.withIndent('  ').convert(backupMap());
 
   Future<void> restoreFromJson(String raw) async {
     final decoded = jsonDecode(raw);
-    if (decoded is! Map) throw const FormatException('ملف النسخة الاحتياطية غير صالح');
+    if (decoded is! Map) {
+      throw const FormatException('ملف النسخة الاحتياطية غير صالح');
+    }
     final map = Map<String, dynamic>.from(decoded);
     if ('${map['format'] ?? ''}' != 'jamiyati-pro-backup') {
       throw const FormatException('هذا الملف ليس نسخة احتياطية من جمعيتي Pro');
     }
+    final version = (map['version'] as num?)?.toInt();
+    if (version == null || version < 1 || version > backupVersion) {
+      throw FormatException('إصدار النسخة الاحتياطية غير مدعوم: ${map['version'] ?? '-'}');
+    }
 
     final restored = <Association>[];
     final rawAssociations = map['associations'];
-    if (rawAssociations is List) {
-      for (final item in rawAssociations) {
-        if (item is Map) {
-          restored.add(Association.fromJson(Map<String, dynamic>.from(item)));
-        }
+    if (rawAssociations is! List) {
+      throw const FormatException('ملف النسخة لا يحتوي بيانات جمعيات صحيحة');
+    }
+    for (final item in rawAssociations) {
+      if (item is Map) {
+        final a = Association.fromJson(Map<String, dynamic>.from(item));
+        if (a.id.isNotEmpty && a.members.isNotEmpty) restored.add(a);
       }
     }
 
@@ -510,10 +516,16 @@ class JamiyatiController extends ChangeNotifier {
       });
     }
 
+    // Only keep payment records that still point to restored associations.
+    final associationIds = restored.map((e) => e.id).toSet();
+    restoredKeys.removeWhere((key) => !associationIds.any((id) => key.startsWith('$id-')));
+    restoredDates.removeWhere((key, _) => !restoredKeys.contains(key));
+
     associations = restored;
     paidKeys = restoredKeys;
     paidAt = restoredDates;
-    currency = '${map['currency'] ?? 'د.أ'}';
+    currency = '${map['currency'] ?? 'د.أ'}'.trim();
+    if (currency.isEmpty) currency = 'د.أ';
     await save();
     notifyListeners();
   }
