@@ -50,12 +50,12 @@ jobs:
         run: |
           set -e
           if [ -f android/app/build.gradle.kts ]; then
-            sed -i 's/applicationId = \".*\"/applicationId = \"com.explapp.jamiyati\"/g' android/app/build.gradle.kts
+            sed -i 's/applicationId = ".*"/applicationId = "com.explapp.jamiyati"/g' android/app/build.gradle.kts
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' android/app/build.gradle.kts
             sed -i 's/minSdk = [0-9][0-9]*/minSdk = 23/g' android/app/build.gradle.kts
           fi
           if [ -f android/app/build.gradle ]; then
-            sed -i 's/applicationId \".*\"/applicationId \"com.explapp.jamiyati\"/g' android/app/build.gradle
+            sed -i 's/applicationId ".*"/applicationId "com.explapp.jamiyati"/g' android/app/build.gradle
             sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' android/app/build.gradle
             sed -i 's/minSdkVersion [0-9][0-9]*/minSdkVersion 23/g' android/app/build.gradle
           fi
@@ -72,7 +72,7 @@ jobs:
           class MainActivity: FlutterFragmentActivity()
           KOTLIN
 
-      - name: Configure AppCompat launch theme
+      - name: Configure premium native launch theme
         shell: bash
         run: |
           cat > android/app/src/main/res/values/styles.xml <<'XML'
@@ -80,14 +80,29 @@ jobs:
           <resources>
               <style name="LaunchTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
                   <item name="android:windowBackground">@drawable/launch_background</item>
+                  <item name="android:windowLightStatusBar">false</item>
+                  <item name="android:statusBarColor">#060915</item>
+                  <item name="android:navigationBarColor">#060915</item>
               </style>
               <style name="NormalTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
-                  <item name="android:windowBackground">?android:colorBackground</item>
+                  <item name="android:windowBackground">#060915</item>
+                  <item name="android:windowLightStatusBar">false</item>
+                  <item name="android:statusBarColor">#060915</item>
+                  <item name="android:navigationBarColor">#060915</item>
               </style>
           </resources>
           XML
           if [ -d android/app/src/main/res/values-night ]; then
             cp android/app/src/main/res/values/styles.xml android/app/src/main/res/values-night/styles.xml
+          fi
+          cat > android/app/src/main/res/drawable/launch_background.xml <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+              <item android:drawable="#060915" />
+          </layer-list>
+          XML
+          if [ -d android/app/src/main/res/drawable-v21 ]; then
+            cp android/app/src/main/res/drawable/launch_background.xml android/app/src/main/res/drawable-v21/launch_background.xml
           fi
 
       - name: Write AndroidManifest
@@ -159,7 +174,7 @@ jobs:
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Build release APK
-        run: flutter build apk --release --no-tree-shake-icons
+        run: flutter build apk --release --target lib/app_entry.dart --no-tree-shake-icons
 
       - name: Copy APK to repository folder
         if: github.event_name != 'pull_request'
