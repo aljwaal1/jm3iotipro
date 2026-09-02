@@ -144,7 +144,7 @@ jobs:
 
           p = Path('lib/main.dart')
           s = p.read_text(encoding='utf-8')
-          s = s.replace('FilePicker.platform.pickFiles(', 'FilePicker().pickFiles(')
+          s = s.replace('FilePicker.platform.pickFiles(', 'FilePicker.pickFiles(')
           p.write_text(s, encoding='utf-8')
 
           p = Path('lib/report_service.dart')
