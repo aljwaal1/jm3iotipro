@@ -1,3 +1,5 @@
+export 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 class AC {
