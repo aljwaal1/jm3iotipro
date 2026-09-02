@@ -22,7 +22,7 @@ class JamiyatiProEntry extends StatefulWidget {
 }
 
 class _JamiyatiProEntryState extends State<JamiyatiProEntry> {
-  static const _onboardingKey = 'jamiyati_pro_onboarding_v3_done';
+  static const _onboardingKey = 'jamiyati_pro_onboarding_v4_done';
   final JamiyatiController controller = JamiyatiController();
 
   bool _bootDone = false;
@@ -35,7 +35,7 @@ class _JamiyatiProEntryState extends State<JamiyatiProEntry> {
   }
 
   Future<void> _boot() async {
-    final minimumSplash = Future<void>.delayed(const Duration(milliseconds: 1050));
+    final minimumSplash = Future<void>.delayed(const Duration(milliseconds: 900));
     final prefs = await SharedPreferences.getInstance();
     await Future.wait<void>([controller.load(), minimumSplash]);
     if (!mounted) return;
@@ -64,7 +64,7 @@ class _JamiyatiProEntryState extends State<JamiyatiProEntry> {
       debugShowCheckedModeBanner: false,
       title: 'جمعيتي Pro',
       locale: const Locale('ar'),
-      supportedLocales: const [Locale('ar'), Locale('en')],
+      supportedLocales: const [Locale('ar')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -74,11 +74,9 @@ class _JamiyatiProEntryState extends State<JamiyatiProEntry> {
       home: Directionality(
         textDirection: ui.TextDirection.rtl,
         child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 420),
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInCubic,
+          duration: const Duration(milliseconds: 360),
           child: !_bootDone
-              ? const _PremiumSplash(key: ValueKey('splash'))
+              ? const _Splash(key: ValueKey('splash'))
               : _showOnboarding
                   ? _Onboarding(
                       key: const ValueKey('onboarding'),
@@ -94,15 +92,14 @@ class _JamiyatiProEntryState extends State<JamiyatiProEntry> {
   }
 }
 
-class _PremiumSplash extends StatefulWidget {
-  const _PremiumSplash({super.key});
+class _Splash extends StatefulWidget {
+  const _Splash({super.key});
 
   @override
-  State<_PremiumSplash> createState() => _PremiumSplashState();
+  State<_Splash> createState() => _SplashState();
 }
 
-class _PremiumSplashState extends State<_PremiumSplash>
-    with SingleTickerProviderStateMixin {
+class _SplashState extends State<_Splash> with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _scale;
   late final Animation<double> _fade;
@@ -112,7 +109,7 @@ class _PremiumSplashState extends State<_PremiumSplash>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 850),
+      duration: const Duration(milliseconds: 760),
     )..forward();
     _scale = CurvedAnimation(parent: _controller, curve: Curves.easeOutBack);
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
@@ -133,9 +130,9 @@ class _PremiumSplashState extends State<_PremiumSplash>
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: RadialGradient(
-                  center: Alignment(0.75, -0.75),
-                  radius: 1.25,
-                  colors: [Color(0xFF243A86), Color(0xFF0A1230), AC.bg],
+                  center: Alignment(0.72, -0.75),
+                  radius: 1.28,
+                  colors: [Color(0xFF1C4C3F), Color(0xFF0C211B), AC.bg],
                   stops: [0, 0.48, 1],
                 ),
               ),
@@ -143,13 +140,13 @@ class _PremiumSplashState extends State<_PremiumSplash>
           ),
           Positioned(
             top: -70,
-            left: -50,
-            child: _GlowOrb(color: AC.cyan, size: 220, opacity: 0.10),
+            left: -55,
+            child: _Glow(color: AC.teal, size: 220),
           ),
           Positioned(
-            bottom: -90,
-            right: -60,
-            child: _GlowOrb(color: AC.violet, size: 260, opacity: 0.10),
+            bottom: -100,
+            right: -70,
+            child: _Glow(color: AC.amber, size: 250),
           ),
           SafeArea(
             child: Center(
@@ -161,60 +158,58 @@ class _PremiumSplashState extends State<_PremiumSplash>
                     ScaleTransition(
                       scale: _scale,
                       child: Container(
-                        width: 112,
-                        height: 112,
+                        width: 108,
+                        height: 108,
                         decoration: BoxDecoration(
                           gradient: AC.heroGrad,
-                          borderRadius: BorderRadius.circular(34),
+                          borderRadius: BorderRadius.circular(32),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.14),
+                            color: Colors.white.withValues(alpha: 0.12),
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: AC.primary.withValues(alpha: 0.35),
-                              blurRadius: 42,
-                              spreadRadius: 2,
-                              offset: const Offset(0, 16),
+                              color: AC.primary.withValues(alpha: 0.20),
+                              blurRadius: 38,
+                              offset: const Offset(0, 15),
                             ),
                           ],
                         ),
                         child: const Icon(
-                          Icons.savings_rounded,
+                          Icons.account_balance_wallet_rounded,
                           color: Colors.white,
-                          size: 58,
+                          size: 54,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 26),
+                    const SizedBox(height: 25),
                     const Text(
                       'جمعيتي Pro',
                       style: TextStyle(
                         color: AC.text,
-                        fontSize: 36,
+                        fontSize: 35,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: -0.8,
                       ),
                     ),
                     const SizedBox(height: 7),
                     const Text(
-                      'جمعيتك واضحة.. من أول قسط لآخر دور',
+                      'كل دور واضح، وكل دفعة محسوبة',
                       style: TextStyle(
                         color: AC.muted,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 28),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 13,
                         vertical: 7,
                       ),
                       decoration: BoxDecoration(
-                        color: AC.teal.withValues(alpha: 0.10),
+                        color: AC.teal.withValues(alpha: 0.09),
                         borderRadius: BorderRadius.circular(999),
                         border: Border.all(
-                          color: AC.teal.withValues(alpha: 0.28),
+                          color: AC.teal.withValues(alpha: 0.22),
                         ),
                       ),
                       child: const Row(
@@ -233,13 +228,13 @@ class _PremiumSplashState extends State<_PremiumSplash>
                         ],
                       ),
                     ),
-                    const SizedBox(height: 34),
+                    const SizedBox(height: 32),
                     const SizedBox(
-                      width: 26,
-                      height: 26,
+                      width: 25,
+                      height: 25,
                       child: CircularProgressIndicator(
-                        strokeWidth: 2.6,
-                        color: AC.cyan,
+                        strokeWidth: 2.5,
+                        color: AC.primary,
                       ),
                     ),
                   ],
@@ -255,6 +250,7 @@ class _PremiumSplashState extends State<_PremiumSplash>
 
 class _Onboarding extends StatefulWidget {
   const _Onboarding({super.key, required this.onFinish});
+
   final Future<void> Function() onFinish;
 
   @override
@@ -262,78 +258,77 @@ class _Onboarding extends StatefulWidget {
 }
 
 class _OnboardingState extends State<_Onboarding> {
-  final PageController _pageController = PageController();
+  final PageController _controller = PageController();
   int _page = 0;
 
-  static const _pages = <_OnboardingData>[
-    _OnboardingData(
-      icon: Icons.auto_awesome_rounded,
-      eyebrow: 'أهلًا بك',
-      title: 'جمعيتك.. منظمة من أول يوم',
+  static const pages = <_Benefit>[
+    _Benefit(
+      icon: Icons.person_add_alt_1_rounded,
+      eyebrow: 'ابدأ بسهولة',
+      title: 'أضف أعضاء جمعيتك ورتّب الأدوار',
       body:
-          'أنشئ الجمعية، أضف الأعضاء ورتّب أدوار الاستلام قبل البداية، ثم تابع كل شيء من شاشة واحدة واضحة.',
+          'اختر الأعضاء من هاتفك أو أضفهم يدويًا. أول عضو تضيفه له الدور الأول، ويمكنك تغيير الترتيب قبل البداية.',
       accent: AC.primary,
-      features: [
-        'جمعية واحدة أو أكثر عند التداخل',
-        'ترتيب واضح للأعضاء والأدوار',
-        'حالات قادمة، نشطة، مكتملة ومؤرشفة',
+      items: [
+        'إضافة من جهات اتصال الهاتف',
+        'بطاقة واضحة لكل عضو',
+        'ترتيب الأدوار بالسحب قبل البداية',
       ],
     ),
-    _OnboardingData(
+    _Benefit(
       icon: Icons.payments_rounded,
-      eyebrow: 'متابعة الدفعات',
-      title: 'اعرف من دفع ومن تأخر',
+      eyebrow: 'الدفعات',
+      title: 'اعرف فورًا من دفع ومن بقي',
       body:
-          'سجّل دفع كل عضو مع التاريخ، وحدد يوم الاستحقاق ليُفرّق التطبيق تلقائيًا بين بانتظار الدفع والمتأخر.',
-      accent: AC.cyan,
-      features: [
-        'تاريخ دفع لكل عضو',
-        'بانتظار الدفع / متأخر / مدفوع',
+          'تابع قسط كل عضو وتاريخ الدفع، واعرف المتأخرين بسرعة عندما يحين موعد الاستحقاق.',
+      accent: AC.teal,
+      items: [
+        'مدفوع، بانتظار الدفع، أو متأخر',
+        'تاريخ واضح لكل دفعة',
         'تذكير سريع عبر واتساب',
       ],
     ),
-    _OnboardingData(
-      icon: Icons.swap_horiz_rounded,
-      eyebrow: 'الأدوار والتسليم',
-      title: 'مرونة حقيقية بدون تعقيد',
+    _Benefit(
+      icon: Icons.how_to_reg_rounded,
+      eyebrow: 'الدور والتسليم',
+      title: 'صاحب الدور ومبلغ التسليم أمامك',
       body:
-          'يمكن تبديل الأدوار القادمة عند اتفاق الأعضاء، وتسجيل تسليم مبلغ الجمعية لصاحب الدور دفعة واحدة أو جزئيًا عند الحاجة.',
-      accent: AC.violet,
-      features: [
-        'تبديل الأدوار القادمة',
-        'حماية الأدوار التي انتهت',
-        'تسجيل مبلغ وتاريخ التسليم',
+          'تعرف من يستلم هذا الدور، وتسجل التسليم كاملًا أو جزئيًا، وتبدّل الأدوار القادمة عند الحاجة.',
+      accent: AC.amber,
+      items: [
+        'صاحب الدور ظاهر بوضوح',
+        'تسليم كامل أو جزئي مع التاريخ',
+        'تبديل الأدوار القادمة بسهولة',
       ],
     ),
-    _OnboardingData(
-      icon: Icons.workspace_premium_rounded,
-      eyebrow: 'كل الأدوات معك',
-      title: 'احترافي.. ومجاني بالكامل',
+    _Benefit(
+      icon: Icons.description_rounded,
+      eyebrow: 'الكشوفات والأمان',
+      title: 'احفظ سجلك وشاركه وقت ما تحتاج',
       body:
-          'كشوفات PDF وPNG، نسخ احتياطي واستعادة، قفل آمن وبصمة عند توفرها — وكل هذه المزايا متاحة مجانًا بالكامل.',
-      accent: AC.teal,
-      features: [
-        'PDF وPNG وتقارير واضحة',
-        'نسخ احتياطي واستعادة',
-        'بدون اشتراك أو رسوم استخدام',
+          'أنشئ كشفًا واضحًا، احفظ نسخة احتياطية، واحمِ التطبيق برمز الدخول أو البصمة — وكل المزايا مجانية.',
+      accent: AC.violet,
+      items: [
+        'كشوفات PDF وصور جاهزة للمشاركة',
+        'نسخة احتياطية واستعادة',
+        'مجاني بالكامل بدون اشتراك',
       ],
-      freeBadge: true,
     ),
   ];
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   void _next() {
-    if (_page == _pages.length - 1) {
+    if (_page == pages.length - 1) {
       widget.onFinish();
       return;
     }
-    _pageController.nextPage(
-      duration: const Duration(milliseconds: 380),
+    _controller.nextPage(
+      duration: const Duration(milliseconds: 340),
       curve: Curves.easeOutCubic,
     );
   }
@@ -347,7 +342,7 @@ class _OnboardingState extends State<_Onboarding> {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF071126), AC.bg],
+                  colors: [Color(0xFF0D211C), AC.bg],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -358,7 +353,7 @@ class _OnboardingState extends State<_Onboarding> {
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 6),
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 4),
                   child: Row(
                     children: [
                       Container(
@@ -369,9 +364,9 @@ class _OnboardingState extends State<_Onboarding> {
                           borderRadius: BorderRadius.circular(13),
                         ),
                         child: const Icon(
-                          Icons.savings_rounded,
+                          Icons.account_balance_wallet_rounded,
                           color: Colors.white,
-                          size: 21,
+                          size: 20,
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -383,7 +378,7 @@ class _OnboardingState extends State<_Onboarding> {
                         ),
                       ),
                       const Spacer(),
-                      if (_page < _pages.length - 1)
+                      if (_page < pages.length - 1)
                         TextButton(
                           onPressed: widget.onFinish,
                           child: const Text(
@@ -396,25 +391,23 @@ class _OnboardingState extends State<_Onboarding> {
                 ),
                 Expanded(
                   child: PageView.builder(
-                    controller: _pageController,
-                    itemCount: _pages.length,
+                    controller: _controller,
+                    itemCount: pages.length,
                     onPageChanged: (value) => setState(() => _page = value),
-                    itemBuilder: (context, index) => _OnboardingPage(
-                      data: _pages[index],
-                    ),
+                    itemBuilder: (_, index) => _BenefitPage(data: pages[index]),
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 6, 20, 22),
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
                   child: Column(
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: List.generate(
-                          _pages.length,
+                          pages.length,
                           (index) => AnimatedContainer(
-                            duration: const Duration(milliseconds: 250),
-                            width: index == _page ? 28 : 8,
+                            duration: const Duration(milliseconds: 220),
+                            width: index == _page ? 27 : 8,
                             height: 8,
                             margin: const EdgeInsets.symmetric(horizontal: 4),
                             decoration: BoxDecoration(
@@ -424,25 +417,25 @@ class _OnboardingState extends State<_Onboarding> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 18),
                       SizedBox(
                         width: double.infinity,
                         child: FilledButton.icon(
                           onPressed: _next,
                           icon: Icon(
-                            _page == _pages.length - 1
-                                ? Icons.rocket_launch_rounded
+                            _page == pages.length - 1
+                                ? Icons.check_rounded
                                 : Icons.arrow_back_rounded,
                           ),
                           label: Text(
-                            _page == _pages.length - 1
+                            _page == pages.length - 1
                                 ? 'ابدأ استخدام جمعيتي Pro'
                                 : 'التالي',
                           ),
                         ),
                       ),
-                      if (_page == _pages.length - 1) ...[
-                        const SizedBox(height: 10),
+                      if (_page == pages.length - 1) ...[
+                        const SizedBox(height: 9),
                         const Text(
                           'مجاني بالكامل • بدون اشتراك أو رسوم استخدام',
                           textAlign: TextAlign.center,
@@ -465,177 +458,122 @@ class _OnboardingState extends State<_Onboarding> {
   }
 }
 
-class _OnboardingPage extends StatelessWidget {
-  const _OnboardingPage({required this.data});
-  final _OnboardingData data;
+class _BenefitPage extends StatelessWidget {
+  const _BenefitPage({required this.data});
+
+  final _Benefit data;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(22, 18, 22, 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Spacer(),
-          Center(
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  width: 190,
-                  height: 190,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: data.accent.withValues(alpha: 0.055),
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight - 36),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 76,
+                height: 76,
+                decoration: BoxDecoration(
+                  color: data.accent.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(23),
+                  border: Border.all(
+                    color: data.accent.withValues(alpha: 0.18),
                   ),
                 ),
-                Container(
-                  width: 126,
-                  height: 126,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        data.accent.withValues(alpha: 0.95),
-                        AC.primary,
-                      ],
-                      begin: Alignment.topRight,
-                      end: Alignment.bottomLeft,
-                    ),
-                    borderRadius: BorderRadius.circular(40),
-                    boxShadow: [
-                      BoxShadow(
-                        color: data.accent.withValues(alpha: 0.26),
-                        blurRadius: 38,
-                        offset: const Offset(0, 18),
-                      ),
-                    ],
-                  ),
-                  child: Icon(data.icon, color: Colors.white, size: 62),
+                child: Icon(data.icon, color: data.accent, size: 37),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                data.eyebrow,
+                style: TextStyle(
+                  color: data.accent,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
                 ),
-              ],
-            ),
-          ),
-          const Spacer(),
-          Text(
-            data.eyebrow,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: data.accent,
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            data.title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AC.text,
-              fontSize: 28,
-              height: 1.25,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            data.body,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AC.muted,
-              fontSize: 13,
-              height: 1.75,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 22),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AC.card.withValues(alpha: 0.78),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: AC.borderSoft),
-            ),
-            child: Column(
-              children: [
-                ...data.features.map(
-                  (feature) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 26,
-                          height: 26,
-                          decoration: BoxDecoration(
-                            color: data.accent.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(9),
-                          ),
-                          child: Icon(
-                            Icons.check_rounded,
-                            color: data.accent,
-                            size: 16,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            feature,
-                            style: const TextStyle(
-                              color: AC.text,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+              ),
+              const SizedBox(height: 7),
+              Text(
+                data.title,
+                style: const TextStyle(
+                  fontSize: 27,
+                  height: 1.3,
+                  fontWeight: FontWeight.w900,
                 ),
-                if (data.freeBadge) ...[
-                  const SizedBox(height: 10),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      gradient: AC.successGrad,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.favorite_rounded, color: Colors.white, size: 18),
-                        SizedBox(width: 8),
-                        Text(
-                          'مجاني 100% — كل المزايا متاحة',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 12,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                data.body,
+                style: const TextStyle(
+                  color: AC.muted,
+                  fontSize: 13,
+                  height: 1.75,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: AC.card,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AC.borderSoft),
+                ),
+                child: Column(
+                  children: data.items
+                      .map(
+                        (item) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 7),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 27,
+                                height: 27,
+                                decoration: BoxDecoration(
+                                  color: data.accent.withValues(alpha: 0.09),
+                                  borderRadius: BorderRadius.circular(9),
+                                ),
+                                child: Icon(
+                                  Icons.check_rounded,
+                                  color: data.accent,
+                                  size: 16,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  item,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ],
-              ],
-            ),
+                      )
+                      .toList(),
+                ),
+              ),
+            ],
           ),
-          const Spacer(),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _OnboardingData {
-  const _OnboardingData({
+class _Benefit {
+  const _Benefit({
     required this.icon,
     required this.eyebrow,
     required this.title,
     required this.body,
     required this.accent,
-    required this.features,
-    this.freeBadge = false,
+    required this.items,
   });
 
   final IconData icon;
@@ -643,20 +581,14 @@ class _OnboardingData {
   final String title;
   final String body;
   final Color accent;
-  final List<String> features;
-  final bool freeBadge;
+  final List<String> items;
 }
 
-class _GlowOrb extends StatelessWidget {
-  const _GlowOrb({
-    required this.color,
-    required this.size,
-    required this.opacity,
-  });
+class _Glow extends StatelessWidget {
+  const _Glow({required this.color, required this.size});
 
   final Color color;
   final double size;
-  final double opacity;
 
   @override
   Widget build(BuildContext context) {
@@ -666,12 +598,12 @@ class _GlowOrb extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: color.withValues(alpha: opacity),
+          color: color.withValues(alpha: 0.06),
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: opacity),
-              blurRadius: size * 0.42,
-              spreadRadius: size * 0.08,
+              color: color.withValues(alpha: 0.08),
+              blurRadius: 70,
+              spreadRadius: 18,
             ),
           ],
         ),
