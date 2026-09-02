@@ -6,9 +6,13 @@ on:
     branches:
       - main
       - master
+      - jamiyati-pro-v3-redesign
     paths-ignore:
       - "apk/**"
       - "DOWNLOAD_APK.md"
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -20,10 +24,10 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
@@ -42,83 +46,91 @@ jobs:
           rm -rf test
           rm -f analysis_options.yaml
 
-      - name: Get packages
-        run: flutter pub get
-
-      - name: Emergency source compatibility fixes
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path("lib/main.dart")
-          s = p.read_text(encoding="utf-8")
-          if "import 'dart:ui' as ui;" not in s:
-              s = s.replace("import 'dart:typed_data';\n", "import 'dart:typed_data';\nimport 'dart:ui' as ui;\n")
-              if "import 'dart:typed_data';\n" not in s and "import 'dart:ui' as ui;" not in s:
-                  s = "import 'dart:ui' as ui;\n" + s
-          s = s.replace("textDirection: TextDirection.rtl", "textDirection: ui.TextDirection.rtl")
-          import re
-          s = re.sub(r"\.withOpacity\(([^)]+)\)", r".withValues(alpha: \1)", s)
-          s = s.replace("activeColor: AC.teal,", "activeThumbColor: AC.teal,")
-          s = s.replace("value: selectedMonth,", "initialValue: selectedMonth,")
-          s = s.replace("      const roseColor = PdfColor.fromInt(0xFFF87171);\n", "")
-          s = s.replace("const roseColor = PdfColor.fromInt(0xFFF87171);\n", "")
-          needle = "child: pw.FractionallySizedBox("
-          while needle in s:
-              start = s.index(needle)
-              open_pos = s.index("(", start)
-              depth = 0
-              end = open_pos
-              for i in range(open_pos, len(s)):
-                  ch = s[i]
-                  if ch == "(":
-                      depth += 1
-                  elif ch == ")":
-                      depth -= 1
-                      if depth == 0:
-                          end = i + 1
-                          break
-              if s[end:end+1] == ",":
-                  end += 1
-              s = s[:start] + "child: pw.Container()," + s[end:]
-          p.write_text(s, encoding="utf-8")
-          PY
-
-      - name: Configure Android app (minSdk + applicationId)
+      - name: Configure Android application
         shell: bash
         run: |
           set -e
           if [ -f android/app/build.gradle.kts ]; then
-            sed -i 's/applicationId = \".*\"/applicationId = \"com.explapp.jamiyati\"/g' android/app/build.gradle.kts
+            sed -i 's/applicationId = ".*"/applicationId = "com.explapp.jamiyati"/g' android/app/build.gradle.kts
             sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' android/app/build.gradle.kts
             sed -i 's/minSdk = [0-9][0-9]*/minSdk = 23/g' android/app/build.gradle.kts
-          fi
-          if [ -f android/app/build.gradle ]; then
-            sed -i 's/applicationId \".*\"/applicationId \"com.explapp.jamiyati\"/g' android/app/build.gradle
-            sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' android/app/build.gradle
-            sed -i 's/minSdkVersion [0-9][0-9]*/minSdkVersion 23/g' android/app/build.gradle
+            python3 - <<'PY'
+          from pathlib import Path
+          p = Path('android/app/build.gradle.kts')
+          s = p.read_text()
+          marker = 'dependencies {'
+          dep = '    implementation("androidx.fragment:fragment-ktx:1.9.0")\n'
+          if marker in s and dep.strip() not in s:
+              s = s.replace(marker, marker + '\n' + dep)
+          elif marker not in s:
+              s += '\n\ndependencies {\n' + dep + '}\n'
+          p.write_text(s)
+          PY
           fi
 
-      - name: Write AndroidManifest (permissions for share + internet)
+      - name: Configure FragmentActivity for biometric authentication
+        shell: bash
+        run: |
+          mkdir -p android/app/src/main/kotlin/com/explapp/jamiyati
+          cat > android/app/src/main/kotlin/com/explapp/jamiyati/MainActivity.kt <<'KOTLIN'
+          package com.explapp.jamiyati
+          import io.flutter.embedding.android.FlutterFragmentActivity
+          class MainActivity: FlutterFragmentActivity()
+          KOTLIN
+
+      - name: Configure premium native launch theme
+        shell: bash
+        run: |
+          cat > android/app/src/main/res/values/colors.xml <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources><color name="jamiyati_launch_bg">#07110F</color></resources>
+          XML
+          cat > android/app/src/main/res/values/styles.xml <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="LaunchTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+                  <item name="android:windowBackground">@drawable/launch_background</item>
+                  <item name="android:windowLightStatusBar">false</item>
+                  <item name="android:statusBarColor">@color/jamiyati_launch_bg</item>
+                  <item name="android:navigationBarColor">@color/jamiyati_launch_bg</item>
+              </style>
+              <style name="NormalTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+                  <item name="android:windowBackground">@color/jamiyati_launch_bg</item>
+                  <item name="android:windowLightStatusBar">false</item>
+                  <item name="android:statusBarColor">@color/jamiyati_launch_bg</item>
+                  <item name="android:navigationBarColor">@color/jamiyati_launch_bg</item>
+              </style>
+          </resources>
+          XML
+          if [ -d android/app/src/main/res/values-night ]; then
+            cp android/app/src/main/res/values/styles.xml android/app/src/main/res/values-night/styles.xml
+          fi
+          cat > android/app/src/main/res/drawable/launch_background.xml <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+              <item><shape android:shape="rectangle"><solid android:color="@color/jamiyati_launch_bg" /></shape></item>
+          </layer-list>
+          XML
+          if [ -d android/app/src/main/res/drawable-v21 ]; then
+            cp android/app/src/main/res/drawable/launch_background.xml android/app/src/main/res/drawable-v21/launch_background.xml
+          fi
+
+      - name: Write AndroidManifest
         shell: bash
         run: |
           cat > android/app/src/main/AndroidManifest.xml <<'MANIFEST'
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <uses-permission android:name="android.permission.INTERNET"/>
-              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>
+              <uses-permission android:name="android.permission.READ_CONTACTS"/>
+              <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+              <uses-permission android:name="android.permission.USE_FINGERPRINT"/>
               <queries>
-                  <intent>
-                      <action android:name="android.intent.action.VIEW" />
-                      <data android:scheme="https" />
-                  </intent>
-                  <intent>
-                      <action android:name="android.intent.action.SEND" />
-                      <data android:mimeType="*/*" />
-                  </intent>
+                  <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="https" /></intent>
+                  <intent><action android:name="android.intent.action.SEND" /><data android:mimeType="*/*" /></intent>
+                  <intent><action android:name="android.intent.action.SENDTO" /><data android:scheme="mailto" /></intent>
               </queries>
               <application
-                  android:label="جمعيتي"
+                  android:label="جمعيتي Pro"
                   android:name="${applicationName}"
                   android:icon="@mipmap/ic_launcher"
                   android:usesCleartextTraffic="false">
@@ -138,60 +150,30 @@ jobs:
                       </intent-filter>
                   </activity>
                   <meta-data android:name="flutterEmbedding" android:value="2" />
-                  <provider
-                      android:name="androidx.core.content.FileProvider"
-                      android:authorities="${applicationId}.fileprovider"
-                      android:exported="false"
-                      android:grantUriPermissions="true">
-                      <meta-data
-                          android:name="android.support.FILE_PROVIDER_PATHS"
-                          android:resource="@xml/file_paths" />
-                  </provider>
               </application>
           </manifest>
           MANIFEST
 
-      - name: Write file_paths.xml for FileProvider (needed by share_plus)
-        shell: bash
-        run: |
-          mkdir -p android/app/src/main/res/xml
-          cat > android/app/src/main/res/xml/file_paths.xml <<'XML'
-          <?xml version="1.0" encoding="utf-8"?>
-          <paths>
-              <cache-path name="cache" path="." />
-              <external-cache-path name="external_cache" path="." />
-              <files-path name="files" path="." />
-          </paths>
-          XML
+      - name: Get packages
+        run: flutter pub get
 
-      - name: Analyze
-        run: |
-          rm -rf test
-          rm -f analysis_options.yaml
-          flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Analyze source without CI source patching
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Build release APK
-        run: flutter build apk --release --no-tree-shake-icons
+        run: flutter build apk --release --target lib/app_entry.dart --no-tree-shake-icons
 
       - name: Copy APK to repository folder
+        if: github.event_name == 'push'
         run: |
           mkdir -p apk
           cp build/app/outputs/flutter-apk/app-release.apk apk/jamiyati.apk
           APK_URL="https://github.com/${GITHUB_REPOSITORY}/raw/${GITHUB_REF_NAME}/apk/jamiyati.apk"
-          cat > DOWNLOAD_APK.md <<EOF
-          # رابط تحميل التطبيق
-
-          حمّل APK مباشرة:
-
-          ${APK_URL}
-          EOF
-          {
-            echo "## رابط تحميل APK"
-            echo ""
-            echo "${APK_URL}"
-          } >> "$GITHUB_STEP_SUMMARY"
+          printf '# رابط تحميل تطبيق جمعيتي Pro\n\nحمّل APK مباشرة:\n\n%s\n' "$APK_URL" > DOWNLOAD_APK.md
+          printf '## رابط تحميل APK\n\n%s\n' "$APK_URL" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Commit APK
+        if: github.event_name == 'push'
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
@@ -200,6 +182,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "APK already up to date"
           else
-            git commit -m "ci: update APK build"
+            git commit -m "ci: update Jamiyati Pro APK"
             git push
           fi
