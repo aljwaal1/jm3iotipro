@@ -136,6 +136,25 @@ jobs:
       - name: Get packages
         run: flutter pub get
 
+      - name: Flutter compatibility fixes
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('lib/main.dart')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('FilePicker.platform.pickFiles(', 'FilePicker().pickFiles(')
+          p.write_text(s, encoding='utf-8')
+
+          p = Path('lib/report_service.dart')
+          s = p.read_text(encoding='utf-8')
+          if "import 'dart:ui' as ui;" not in s:
+              s = s.replace("import 'dart:io';\n", "import 'dart:io';\nimport 'dart:ui' as ui;\n")
+          s = s.replace('textDirection: TextDirection.rtl', 'textDirection: ui.TextDirection.rtl')
+          p.write_text(s, encoding='utf-8')
+          PY
+
       - name: Analyze
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
