@@ -425,7 +425,7 @@ class _OnboardingState extends State<_Onboarding> {
                           icon: Icon(
                             _page == pages.length - 1
                                 ? Icons.check_rounded
-                                : Icons.arrow_back_rounded,
+                                : Icons.arrow_forward_rounded,
                           ),
                           label: Text(
                             _page == pages.length - 1
