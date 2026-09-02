@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'app_theme.dart';
@@ -440,12 +441,11 @@ class _DetailsPageState extends State<DetailsPage> {
                         ],
                       ),
                     ),
-                    if (m.phone.trim().isNotEmpty)
-                      IconButton(
-                        tooltip: 'واتساب',
-                        onPressed: () => _sendWhatsapp(m),
-                        icon: const Icon(Icons.chat_rounded, color: AC.cyan, size: 20),
-                      ),
+                    IconButton(
+                      tooltip: 'إرسال تذكير',
+                      onPressed: () => _showReminderOptions(m),
+                      icon: const Icon(Icons.send_rounded, color: AC.cyan, size: 20),
+                    ),
                     Switch(
                       value: isPaid,
                       activeThumbColor: AC.teal,
@@ -989,13 +989,82 @@ class _DetailsPageState extends State<DetailsPage> {
     }
   }
 
+  String _reminderText(Member m) => 'السلام عليكم ${m.name}\n'
+      'تذكير بقسط جمعية ${a.name}\n'
+      'الدور: ${selectedRound + 1}\n'
+      'الفترة: ${c.roundLabel(a, selectedRound)}\n'
+      'المبلغ: ${ReportService.n(a.amount)} ${c.currency}\n'
+      'شكرًا لك';
+
+  Future<void> _showReminderOptions(Member m) async {
+    final channel = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AC.card,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'إرسال التذكير عبر',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                m.name,
+                style: const TextStyle(color: AC.muted, fontSize: 11),
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0x1F25D366),
+                  child: Icon(Icons.chat_rounded, color: AC.teal),
+                ),
+                title: const Text('واتساب', style: TextStyle(fontWeight: FontWeight.w800)),
+                subtitle: Text(
+                  m.phone.trim().isEmpty
+                      ? 'اختر الشخص داخل واتساب'
+                      : 'إرسال مباشرة إلى الرقم المسجل',
+                ),
+                onTap: () => Navigator.pop(sheetContext, 'whatsapp'),
+              ),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0x1F35B8E8),
+                  child: Icon(Icons.send_rounded, color: AC.cyan),
+                ),
+                title: const Text('تيليجرام', style: TextStyle(fontWeight: FontWeight.w800)),
+                subtitle: const Text('افتح تيليجرام ثم اختر الشخص أو المجموعة'),
+                onTap: () => Navigator.pop(sheetContext, 'telegram'),
+              ),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0x1FFFFFFF),
+                  child: Icon(Icons.ios_share_rounded, color: AC.muted),
+                ),
+                title: const Text('مشاركة أخرى', style: TextStyle(fontWeight: FontWeight.w800)),
+                subtitle: const Text('استخدم أي تطبيق مشاركة على الهاتف'),
+                onTap: () => Navigator.pop(sheetContext, 'share'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (channel == null) return;
+    if (channel == 'whatsapp') {
+      await _sendWhatsapp(m);
+    } else if (channel == 'telegram') {
+      await _sendTelegram(m);
+    } else {
+      await Share.share(_reminderText(m));
+    }
+  }
+
   Future<void> _sendWhatsapp(Member m) async {
-    final text = 'السلام عليكم ${m.name} 🌟\n'
-        'تذكير بقسط جمعية ${a.name}\n'
-        'الدور: ${selectedRound + 1}\n'
-        'الفترة: ${c.roundLabel(a, selectedRound)}\n'
-        'المبلغ: ${ReportService.n(a.amount)} ${c.currency}\n'
-        'شكرًا لك 🙏';
+    final text = _reminderText(m);
     var phone = m.phone.replaceAll(RegExp(r'[^0-9+]'), '');
     if (phone.startsWith('00')) phone = '+${phone.substring(2)}';
     final encoded = Uri.encodeComponent(text);
@@ -1006,6 +1075,17 @@ class _DetailsPageState extends State<DetailsPage> {
     if (!ok) {
       await Clipboard.setData(ClipboardData(text: text));
       _msg('تعذر فتح واتساب، تم نسخ الرسالة');
+    }
+  }
+
+  Future<void> _sendTelegram(Member m) async {
+    final text = _reminderText(m);
+    final encoded = Uri.encodeComponent(text);
+    final uri = Uri.parse('https://t.me/share/url?url=&text=$encoded');
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok) {
+      await Share.share(text);
+      _msg('تعذر فتح تيليجرام مباشرة، فتحت قائمة المشاركة');
     }
   }
 
