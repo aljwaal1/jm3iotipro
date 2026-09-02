@@ -20,6 +20,63 @@ class ReportService {
 
   static String n(num value) => _number.format(value);
 
+  static int memberPaidRounds(
+    JamiyatiController c,
+    Association a,
+    Member member,
+  ) {
+    var count = 0;
+    for (var round = 0; round < a.monthsCount; round++) {
+      if (c.isPaid(a, round, member)) count++;
+    }
+    return count;
+  }
+
+  static double memberPaidTotal(
+    JamiyatiController c,
+    Association a,
+    Member member,
+  ) => memberPaidRounds(c, a, member) * a.amount;
+
+  static List<int> memberReceiverRounds(Association a, Member member) {
+    final rounds = <int>[];
+    for (var round = 0; round < a.monthsCount; round++) {
+      if (a.receiverFor(round)?.id == member.id) rounds.add(round);
+    }
+    return rounds;
+  }
+
+  static double memberReceivedTotal(Association a, Member member) {
+    var total = 0.0;
+    for (final round in memberReceiverRounds(a, member)) {
+      total += a.deliveredTotal(round);
+    }
+    return total;
+  }
+
+  static String memberAccountText(
+    JamiyatiController c,
+    Association a,
+    Member member,
+  ) {
+    final paidRounds = memberPaidRounds(c, a, member);
+    final paid = memberPaidTotal(c, a, member);
+    final receiverRounds = memberReceiverRounds(a, member);
+    final received = memberReceivedTotal(a, member);
+    final net = received - paid;
+    final b = StringBuffer();
+    b.writeln('كشف حساب عضو - ${a.name}');
+    b.writeln('العضو: ${member.name}');
+    if (member.phone.trim().isNotEmpty) b.writeln('الهاتف: ${member.phone}');
+    b.writeln('تم دفع: ${n(paid)} ${c.currency} ($paidRounds دفعات)');
+    b.writeln('تم استلام: ${n(received)} ${c.currency}');
+    if (receiverRounds.isNotEmpty) {
+      b.writeln('أدوار الاستلام: ${receiverRounds.map((e) => e + 1).join('، ')}');
+    }
+    b.writeln('الصافي (استلم - دفع): ${n(net)} ${c.currency}');
+    return b.toString();
+  }
+
   static String associationText(
     JamiyatiController c,
     Association a,
@@ -41,8 +98,8 @@ class ReportService {
     b.writeln('دفعوا: $paid / ${a.members.length}');
     b.writeln('بانتظار الدفع: $waiting');
     b.writeln('متأخرون: $late');
-    b.writeln('المحصل: ${n(c.collectedAmount(a, roundIndex))} ${c.currency}');
-    b.writeln('المسلّم لصاحب الدور: ${n(delivered)} ${c.currency}');
+    b.writeln('تم دفع: ${n(c.collectedAmount(a, roundIndex))} ${c.currency}');
+    b.writeln('تم تسليم: ${n(delivered)} ${c.currency}');
     b.writeln('المتبقي للتسليم: ${n(remaining)} ${c.currency}');
     b.writeln('------------------------------');
     for (final m in a.members) {
@@ -64,6 +121,16 @@ class ReportService {
       for (final d in deliveries) {
         b.writeln('${n(d.amount)} ${c.currency} - ${_date.format(d.date)}');
       }
+    }
+    b.writeln('------------------------------');
+    b.writeln('كشف حساب الأعضاء - جميع الأدوار:');
+    for (final member in a.members) {
+      final totalPaid = memberPaidTotal(c, a, member);
+      final totalReceived = memberReceivedTotal(a, member);
+      final net = totalReceived - totalPaid;
+      b.writeln(
+        '${member.name}: دفع ${n(totalPaid)} • استلم ${n(totalReceived)} • الصافي ${n(net)} ${c.currency}',
+      );
     }
     if (a.note.trim().isNotEmpty) {
       b.writeln('------------------------------');
@@ -97,8 +164,6 @@ class ReportService {
     Association a,
     int roundIndex,
   ) async {
-    // Render Arabic with Flutter first, then embed the rendered image in PDF.
-    // This keeps the PDF fully offline and avoids downloading Arabic fonts.
     final png = await _captureStatement(c, a, roundIndex, pixelRatio: 2.5);
     final image = pw.MemoryImage(png);
     final pdf = pw.Document();
@@ -208,15 +273,15 @@ class ReportService {
             children: [
               _metric('إجمالي الدور', '${n(a.roundTotal)} ${c.currency}', AC.primary),
               const SizedBox(width: 7),
-              _metric('المحصل', '${n(collected)} ${c.currency}', AC.teal),
+              _metric('تم دفع', '${n(collected)} ${c.currency}', AC.teal),
             ],
           ),
           const SizedBox(height: 7),
           Row(
             children: [
-              _metric('المسلّم', '${n(delivered)} ${c.currency}', AC.cyan),
+              _metric('تم تسليم', '${n(delivered)} ${c.currency}', AC.cyan),
               const SizedBox(width: 7),
-              _metric('المتبقي', '${n(remaining)} ${c.currency}', AC.amber),
+              _metric('متبقي للتسليم', '${n(remaining)} ${c.currency}', AC.amber),
             ],
           ),
           const SizedBox(height: 12),
@@ -236,7 +301,7 @@ class ReportService {
           ),
           const SizedBox(height: 16),
           const Text(
-            'دفعات الأعضاء',
+            'دفعات الأعضاء - هذا الدور',
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 7),
@@ -315,6 +380,57 @@ class ReportService {
               ),
             ),
           ],
+          const SizedBox(height: 14),
+          const Text(
+            'كشف حساب الأعضاء - جميع الأدوار',
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 7),
+          ...a.members.map((member) {
+            final totalPaid = memberPaidTotal(c, a, member);
+            final totalReceived = memberReceivedTotal(a, member);
+            final net = totalReceived - totalPaid;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AC.card,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AC.borderSoft),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    member.name,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+                  ),
+                  const SizedBox(height: 5),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'دفع: ${n(totalPaid)} ${c.currency}',
+                          style: const TextStyle(color: AC.teal, fontSize: 10, fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'استلم: ${n(totalReceived)} ${c.currency}',
+                          style: const TextStyle(color: AC.cyan, fontSize: 10, fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'الصافي: ${n(net)} ${c.currency}',
+                    style: const TextStyle(color: AC.muted, fontSize: 9, fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
+            );
+          }),
           if (a.note.trim().isNotEmpty) ...[
             const SizedBox(height: 10),
             Container(
