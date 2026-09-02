@@ -122,32 +122,92 @@ class _DetailsPageState extends State<DetailsPage> {
           const SizedBox(height: 14),
           _activityCard(),
           const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _run(
-                    () => ReportService.exportPng(c, a, selectedRound),
-                    'جاري إنشاء الصورة...',
-                  ),
-                  icon: const Icon(Icons.image_rounded, color: AC.violet),
-                  label: const Text('مشاركة صورة'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _copyReport,
-                  icon: const Icon(Icons.copy_rounded, color: AC.cyan),
-                  label: const Text('نسخ الكشف'),
-                ),
-              ),
-            ],
-          ),
+          _reportsCard(),
         ],
       ),
     );
   }
+
+  Widget _reportsCard() => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: _cardDecoration(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.description_rounded, color: AC.teal, size: 20),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'تقارير الجمعية',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${ReportService.monthYear(ReportService.associationStart(a))} — ${ReportService.monthYear(ReportService.associationEnd(a))}',
+              style: const TextStyle(color: AC.muted, fontSize: 10),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _run(
+                      () => ReportService.exportPdf(c, a, selectedRound),
+                      'جاري تجهيز PDF...',
+                    ),
+                    icon: const Icon(Icons.picture_as_pdf_rounded, color: AC.rose),
+                    label: const Text('PDF'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _run(
+                      () => ReportService.exportPng(c, a, selectedRound),
+                      'جاري تجهيز PNG...',
+                    ),
+                    icon: const Icon(Icons.image_rounded, color: AC.violet),
+                    label: const Text('PNG'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _run(
+                      () => ReportService.exportExcel(c, a, selectedRound),
+                      'جاري تجهيز Excel...',
+                    ),
+                    icon: const Icon(Icons.table_chart_rounded, color: AC.teal),
+                    label: const Text('Excel'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 9),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () => _run(
+                  () => ReportService.exportAll(c, a, selectedRound),
+                  'جاري تجهيز التقارير الثلاثة...',
+                ),
+                icon: const Icon(Icons.file_copy_rounded),
+                label: const Text('تصدير PDF + PNG + Excel معًا'),
+              ),
+            ),
+            const SizedBox(height: 7),
+            const Text(
+              'تتضمن التقارير كشف حساب لكل عضو: كم دفع، كم استلم، والصافي.',
+              style: TextStyle(color: AC.muted, fontSize: 9, height: 1.5),
+            ),
+          ],
+        ),
+      );
 
   Widget _readOnlyBanner() => Container(
         padding: const EdgeInsets.all(12),
@@ -217,7 +277,12 @@ class _DetailsPageState extends State<DetailsPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 8),
+            Text(
+              '${ReportService.monthYear(ReportService.associationStart(a))} ← ${ReportService.monthYear(ReportService.associationEnd(a))}',
+              style: const TextStyle(color: Colors.white70, fontSize: 10),
+            ),
+            const SizedBox(height: 10),
             const Text('صاحب الدور', style: TextStyle(color: Colors.white70, fontSize: 12)),
             const SizedBox(height: 3),
             Text(
@@ -233,7 +298,7 @@ class _DetailsPageState extends State<DetailsPage> {
               children: [
                 _heroMetric('إجمالي الدور', '${ReportService.n(a.roundTotal)} ${c.currency}'),
                 const SizedBox(width: 8),
-                _heroMetric('المحصل', '${ReportService.n(collected)} ${c.currency}'),
+                _heroMetric('تم دفع', '${ReportService.n(collected)} ${c.currency}'),
               ],
             ),
             const SizedBox(height: 12),
@@ -1087,13 +1152,6 @@ class _DetailsPageState extends State<DetailsPage> {
       await Share.share(text);
       _msg('تعذر فتح تيليجرام مباشرة، فتحت قائمة المشاركة');
     }
-  }
-
-  Future<void> _copyReport() async {
-    await Clipboard.setData(
-      ClipboardData(text: ReportService.associationText(c, a, selectedRound)),
-    );
-    _msg('✓ تم نسخ الكشف');
   }
 
   Future<void> _run(Future<void> Function() action, String loading) async {
