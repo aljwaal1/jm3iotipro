@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:file_picker/file_picker.dart';
@@ -13,6 +12,7 @@ import 'package:share_plus/share_plus.dart';
 import 'app_theme.dart';
 import 'controller.dart';
 import 'details_page.dart';
+import 'developer_contact.dart';
 import 'models.dart';
 import 'report_service.dart';
 
@@ -49,7 +49,7 @@ class _JamiyatiAppState extends State<JamiyatiApp> {
       debugShowCheckedModeBanner: false,
       title: 'جمعيتي Pro',
       locale: const Locale('ar'),
-      supportedLocales: const [Locale('ar'), Locale('en')],
+      supportedLocales: const [Locale('ar')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -302,7 +302,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             ],
           ),
           const SizedBox(height: 21),
-          _sectionHeader('الجمعيات الحالية', 'حتى 2 أو 3 جمعيات متداخلة تبقى واضحة'),
+          _sectionHeader('الجمعيات الحالية', 'الجمعيات المتداخلة تبقى واضحة وسهلة المتابعة'),
           ...live.map(_associationCard),
         ],
         if (c.associations.any((a) => c.stageOf(a) == AssociationStage.completed && !a.archived)) ...[
@@ -621,6 +621,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         _actionTile(Icons.upload_file_rounded, 'تصدير نسخة احتياطية', 'JSON يشمل الجمعيات والدفعات والتسليم', AC.amber, _exportBackup),
         _actionTile(Icons.settings_backup_restore_rounded, 'استعادة نسخة احتياطية', 'اختر ملف جمعيتي Pro', AC.violet, _restoreBackup),
         const SizedBox(height: 15),
+        _sectionHeader('الدعم', 'اقتراح، مشكلة أو ملاحظة'),
+        _actionTile(Icons.support_agent_rounded, 'مراسلة المطور', developerEmail, AC.cyan, _contactDeveloper),
+        const SizedBox(height: 15),
         Container(
           padding: const EdgeInsets.all(17),
           decoration: BoxDecoration(color: AC.card, borderRadius: BorderRadius.circular(21), border: Border.all(color: AC.borderSoft)),
@@ -636,7 +639,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               ),
               SizedBox(height: 8),
               Text(
-                'مصمم لإدارة عدد قليل من الجمعيات بوضوح: أعضاء ثابتون بعد البداية، تبديل الأدوار القادمة، تاريخ الدفع، تسليم صاحب الدور، كشوفات ونسخ احتياطية. يعمل بدون حساب أو خادم.',
+                'إدارة بسيطة وواضحة للجمعيات: أعضاء ثابتون بعد البداية، تبديل الأدوار القادمة، تاريخ الدفع، تسليم صاحب الدور، كشوفات ونسخ احتياطية. يعمل بدون حساب أو خادم، ومجاني بالكامل.',
                 style: TextStyle(color: AC.muted, fontSize: 11, height: 1.65),
               ),
             ],
@@ -776,7 +779,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     maxLines: 9,
                     decoration: const InputDecoration(
                       labelText: 'الأعضاء بالترتيب',
-                      hintText: 'كل سطر: الاسم,رقم الهاتف\nأحمد,0790000000\nمحمد,0791111111\nخالد,',
+                      hintText: 'كل سطر: الاسم,رقم الهاتف\nيفضل كتابة الهاتف مع رمز الدولة مثل +962...\nأحمد,+962790000000\nمحمد,+962791111111',
                       alignLabelWithHint: true,
                       prefixIcon: Icon(Icons.groups_2_rounded),
                     ),
@@ -919,6 +922,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _msg(value.trim().isEmpty ? 'تم إلغاء رمز الدخول' : '✓ تم حفظ رمز الدخول بأمان');
   }
 
+  Future<void> _contactDeveloper() async {
+    final ok = await contactDeveloper();
+    if (!ok) {
+      await Clipboard.setData(const ClipboardData(text: developerEmail));
+      _msg('تعذر فتح تطبيق البريد، تم نسخ بريد المطور');
+    }
+  }
+
   Future<void> _exportBackup() async {
     try {
       final dir = await getTemporaryDirectory();
@@ -933,7 +944,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   Future<void> _restoreBackup() async {
     try {
-      final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+      final result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
       final path = result?.files.single.path;
       if (path == null) return;
       final raw = await File(path).readAsString();
