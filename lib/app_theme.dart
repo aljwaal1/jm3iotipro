@@ -3,38 +3,38 @@ export 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 class AC {
-  static const bg = Color(0xFF060915);
-  static const surface = Color(0xFF0B1123);
-  static const card = Color(0xFF101A32);
-  static const card2 = Color(0xFF16233F);
-  static const border = Color(0xFF243657);
-  static const borderSoft = Color(0xFF1B2A48);
+  static const bg = Color(0xFF07110F);
+  static const surface = Color(0xFF0B1714);
+  static const card = Color(0xFF10201C);
+  static const card2 = Color(0xFF172A25);
+  static const border = Color(0xFF2A453D);
+  static const borderSoft = Color(0xFF20372F);
 
-  static const text = Color(0xFFF7F9FF);
-  static const muted = Color(0xFFA6B5D1);
-  static const hint = Color(0xFF667A9F);
+  static const text = Color(0xFFF3F7F4);
+  static const muted = Color(0xFFA9BCB5);
+  static const hint = Color(0xFF708B82);
 
-  static const primary = Color(0xFF6C8CFF);
-  static const cyan = Color(0xFF22D3EE);
-  static const teal = Color(0xFF35E0B2);
-  static const amber = Color(0xFFFFC857);
-  static const rose = Color(0xFFFF6B8B);
-  static const violet = Color(0xFFB388FF);
+  static const primary = Color(0xFF70D2B2);
+  static const cyan = Color(0xFF72D8CE);
+  static const teal = Color(0xFF42CFA4);
+  static const amber = Color(0xFFE8C46B);
+  static const rose = Color(0xFFFF7B8D);
+  static const violet = Color(0xFFC4A7D7);
 
   static const heroGrad = LinearGradient(
-    colors: [Color(0xFF5B6CFF), Color(0xFF2C4DB8), Color(0xFF087D8C)],
+    colors: [Color(0xFF216653), Color(0xFF194B40), Color(0xFF12332D)],
     begin: Alignment.topRight,
     end: Alignment.bottomLeft,
   );
 
   static const cardGrad = LinearGradient(
-    colors: [Color(0xFF15284D), Color(0xFF101A32)],
+    colors: [Color(0xFF173029), Color(0xFF10201C)],
     begin: Alignment.topRight,
     end: Alignment.bottomLeft,
   );
 
   static const successGrad = LinearGradient(
-    colors: [Color(0xFF0C8B75), Color(0xFF116A89)],
+    colors: [Color(0xFF1B7159), Color(0xFF315B4C)],
     begin: Alignment.topRight,
     end: Alignment.bottomLeft,
   );
@@ -48,7 +48,7 @@ ThemeData buildTheme() {
       surface: AC.card,
       primary: AC.primary,
       secondary: AC.teal,
-      tertiary: AC.violet,
+      tertiary: AC.amber,
       error: AC.rose,
     ),
     appBarTheme: const AppBarTheme(
@@ -67,7 +67,7 @@ ThemeData buildTheme() {
     navigationBarTheme: NavigationBarThemeData(
       height: 70,
       backgroundColor: AC.surface,
-      indicatorColor: AC.primary.withValues(alpha: 0.20),
+      indicatorColor: AC.primary.withValues(alpha: 0.14),
       iconTheme: WidgetStateProperty.resolveWith((states) {
         return IconThemeData(
           color: states.contains(WidgetState.selected) ? AC.primary : AC.hint,
@@ -105,11 +105,11 @@ ThemeData buildTheme() {
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         backgroundColor: AC.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: const Color(0xFF07251C),
         minimumSize: const Size(0, 48),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        textStyle: const TextStyle(fontWeight: FontWeight.w800),
+        textStyle: const TextStyle(fontWeight: FontWeight.w900),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
@@ -122,7 +122,7 @@ ThemeData buildTheme() {
     ),
     chipTheme: ChipThemeData(
       backgroundColor: AC.card2,
-      selectedColor: AC.primary.withValues(alpha: 0.22),
+      selectedColor: AC.primary.withValues(alpha: 0.16),
       side: const BorderSide(color: AC.border),
       labelStyle: const TextStyle(color: AC.text, fontSize: 11),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -135,6 +135,11 @@ ThemeData buildTheme() {
       backgroundColor: AC.card2,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    ),
+    bottomSheetTheme: const BottomSheetThemeData(
+      backgroundColor: AC.surface,
+      surfaceTintColor: Colors.transparent,
+      dragHandleColor: AC.hint,
     ),
   );
 }
