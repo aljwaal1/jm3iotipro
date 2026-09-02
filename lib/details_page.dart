@@ -25,6 +25,7 @@ class DetailsPage extends StatefulWidget {
 
 class _DetailsPageState extends State<DetailsPage> {
   late int selectedRound;
+  ReportScope reportScope = ReportScope.month;
   final DateFormat _date = DateFormat('yyyy/MM/dd');
 
   JamiyatiController get c => widget.controller;
@@ -78,7 +79,12 @@ class _DetailsPageState extends State<DetailsPage> {
           IconButton(
             tooltip: 'PDF',
             onPressed: () => _run(
-              () => ReportService.exportPdf(c, a, selectedRound),
+              () => ReportService.exportPdf(
+                c,
+                a,
+                selectedRound,
+                scope: reportScope,
+              ),
               'جاري إنشاء PDF...',
             ),
             icon: const Icon(Icons.picture_as_pdf_rounded, color: AC.rose),
@@ -140,7 +146,7 @@ class _DetailsPageState extends State<DetailsPage> {
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'تقارير الجمعية',
+                    'كشف حركة الجمعية',
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
                   ),
                 ),
@@ -148,16 +154,55 @@ class _DetailsPageState extends State<DetailsPage> {
             ),
             const SizedBox(height: 4),
             Text(
-              '${ReportService.monthYear(ReportService.associationStart(a))} — ${ReportService.monthYear(ReportService.associationEnd(a))}',
+              reportScope == ReportScope.month
+                  ? 'كشف ${ReportService.monthYear(ReportService.roundMonth(a, selectedRound))}'
+                  : 'من بداية الجمعية لغاية اليوم',
               style: const TextStyle(color: AC.muted, fontSize: 10),
             ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: SegmentedButton<ReportScope>(
+                segments: const [
+                  ButtonSegment<ReportScope>(
+                    value: ReportScope.month,
+                    icon: Icon(Icons.calendar_month_rounded, size: 17),
+                    label: Text('شهر محدد'),
+                  ),
+                  ButtonSegment<ReportScope>(
+                    value: ReportScope.toDate,
+                    icon: Icon(Icons.history_rounded, size: 17),
+                    label: Text('لغاية اليوم'),
+                  ),
+                ],
+                selected: {reportScope},
+                showSelectedIcon: false,
+                onSelectionChanged: (value) {
+                  if (value.isNotEmpty) {
+                    setState(() => reportScope = value.first);
+                  }
+                },
+              ),
+            ),
+            if (reportScope == ReportScope.month) ...[
+              const SizedBox(height: 7),
+              Text(
+                'الشهر المختار: ${ReportService.monthYear(ReportService.roundMonth(a, selectedRound))}',
+                style: const TextStyle(color: AC.amber, fontSize: 9),
+              ),
+            ],
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () => _run(
-                      () => ReportService.exportPdf(c, a, selectedRound),
+                      () => ReportService.exportPdf(
+                        c,
+                        a,
+                        selectedRound,
+                        scope: reportScope,
+                      ),
                       'جاري تجهيز PDF...',
                     ),
                     icon: const Icon(Icons.picture_as_pdf_rounded, color: AC.rose),
@@ -168,7 +213,12 @@ class _DetailsPageState extends State<DetailsPage> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () => _run(
-                      () => ReportService.exportPng(c, a, selectedRound),
+                      () => ReportService.exportPng(
+                        c,
+                        a,
+                        selectedRound,
+                        scope: reportScope,
+                      ),
                       'جاري تجهيز PNG...',
                     ),
                     icon: const Icon(Icons.image_rounded, color: AC.violet),
@@ -179,7 +229,12 @@ class _DetailsPageState extends State<DetailsPage> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () => _run(
-                      () => ReportService.exportExcel(c, a, selectedRound),
+                      () => ReportService.exportExcel(
+                        c,
+                        a,
+                        selectedRound,
+                        scope: reportScope,
+                      ),
                       'جاري تجهيز Excel...',
                     ),
                     icon: const Icon(Icons.table_chart_rounded, color: AC.teal),
@@ -193,7 +248,12 @@ class _DetailsPageState extends State<DetailsPage> {
               width: double.infinity,
               child: FilledButton.icon(
                 onPressed: () => _run(
-                  () => ReportService.exportAll(c, a, selectedRound),
+                  () => ReportService.exportAll(
+                    c,
+                    a,
+                    selectedRound,
+                    scope: reportScope,
+                  ),
                   'جاري تجهيز التقارير الثلاثة...',
                 ),
                 icon: const Icon(Icons.file_copy_rounded),
@@ -202,7 +262,7 @@ class _DetailsPageState extends State<DetailsPage> {
             ),
             const SizedBox(height: 7),
             const Text(
-              'تتضمن التقارير كشف حساب لكل عضو: كم دفع، كم استلم، والصافي.',
+              'يعرض الكشف من دفع، كم دفع، متى دفع، ومن استلم، كم استلم، ومتى تم التسليم.',
               style: TextStyle(color: AC.muted, fontSize: 9, height: 1.5),
             ),
           ],
