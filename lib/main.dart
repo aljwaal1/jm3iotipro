@@ -698,6 +698,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       ),
                       const SizedBox(height: 3),
                       Text(
+                        '${ReportService.monthYear(ReportService.associationStart(a))} — ${ReportService.monthYear(ReportService.associationEnd(a))}',
+                        style: const TextStyle(color: AC.muted, fontSize: 9),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
                         'الدور ${round + 1}/${a.monthsCount} • ${c.roundLabel(a, round)}',
                         style: const TextStyle(color: AC.muted, fontSize: 10),
                       ),
@@ -823,7 +828,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'كشوفات واضحة وجاهزة للمشاركة',
+                      'تقارير مرتبة وجاهزة للمشاركة',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 17,
@@ -832,7 +837,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'PDF عربي • صورة • نص مع الدفع والتسليم',
+                      'PDF • PNG • Excel • أو الثلاثة معًا',
                       style: TextStyle(color: Colors.white70, fontSize: 11),
                     ),
                   ],
@@ -842,92 +847,119 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           ),
         ),
         const SizedBox(height: 18),
-        _sectionHeader('تقارير سريعة', 'للمتابعة اليومية'),
-        _actionTile(
-          Icons.analytics_rounded,
-          'ملخص عام',
-          'عدد الجمعيات والتحصيل والمتأخرين',
-          AC.primary,
-          () => _copy(_generalReport()),
+        _sectionHeader(
+          'كشوفات الجمعيات',
+          'كل تقرير يتضمن الدفعات والتسليم وكشف حساب كل عضو',
         ),
-        _actionTile(
-          Icons.warning_amber_rounded,
-          'كشف المتأخرين',
-          'من تجاوزوا موعد الاستحقاق',
-          AC.rose,
-          () => _copy(_lateReport()),
-        ),
-        const SizedBox(height: 15),
-        _sectionHeader('كشوفات الجمعيات', 'افتح الجمعية واختر الدور الذي تريده'),
         if (c.associations.isEmpty)
           _emptyState(
             'لا توجد بيانات',
-            'أنشئ جمعية أولًا لتظهر كشوفاتها.',
+            'أنشئ جمعية أولًا لتظهر تقاريرها.',
             Icons.receipt_long_rounded,
           )
         else
           ...c.associations.map((a) {
             final round = c.displayRound(a);
             return Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(14),
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(15),
               decoration: BoxDecoration(
                 color: AC.card,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: AC.borderSoft),
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: AC.teal.withValues(alpha: 0.09),
-                      borderRadius: BorderRadius.circular(13),
-                    ),
-                    child: const Icon(
-                      Icons.receipt_long_rounded,
-                      color: AC.teal,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          a.name,
-                          style: const TextStyle(fontWeight: FontWeight.w900),
+                  Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: AC.teal.withValues(alpha: 0.09),
+                          borderRadius: BorderRadius.circular(13),
                         ),
-                        Text(
-                          'الدور ${round + 1} • ${a.receiverFor(round)?.name ?? '-'}',
-                          style: const TextStyle(color: AC.muted, fontSize: 10),
+                        child: const Icon(
+                          Icons.receipt_long_rounded,
+                          color: AC.teal,
+                          size: 20,
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              a.name,
+                              style: const TextStyle(fontWeight: FontWeight.w900),
+                            ),
+                            Text(
+                              '${ReportService.monthYear(ReportService.associationStart(a))} — ${ReportService.monthYear(ReportService.associationEnd(a))}',
+                              style: const TextStyle(color: AC.muted, fontSize: 9),
+                            ),
+                            Text(
+                              'الدور ${round + 1} • ${a.receiverFor(round)?.name ?? '-'}',
+                              style: const TextStyle(color: AC.muted, fontSize: 10),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'فتح الجمعية',
+                        onPressed: () => _openDetails(a),
+                        icon: const Icon(
+                          Icons.chevron_left_rounded,
+                          color: AC.hint,
+                          size: 20,
+                        ),
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    tooltip: 'PDF',
-                    onPressed: () => _run(
-                      () => ReportService.exportPdf(c, a, round),
-                    ),
-                    icon: const Icon(Icons.picture_as_pdf_rounded, color: AC.rose),
+                  const SizedBox(height: 11),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _run(
+                            () => ReportService.exportPdf(c, a, round),
+                          ),
+                          icon: const Icon(Icons.picture_as_pdf_rounded, color: AC.rose, size: 18),
+                          label: const Text('PDF'),
+                        ),
+                      ),
+                      const SizedBox(width: 7),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _run(
+                            () => ReportService.exportPng(c, a, round),
+                          ),
+                          icon: const Icon(Icons.image_rounded, color: AC.violet, size: 18),
+                          label: const Text('PNG'),
+                        ),
+                      ),
+                      const SizedBox(width: 7),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _run(
+                            () => ReportService.exportExcel(c, a, round),
+                          ),
+                          icon: const Icon(Icons.table_chart_rounded, color: AC.teal, size: 18),
+                          label: const Text('Excel'),
+                        ),
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    tooltip: 'صورة',
-                    onPressed: () => _run(
-                      () => ReportService.exportPng(c, a, round),
-                    ),
-                    icon: const Icon(Icons.image_rounded, color: AC.violet),
-                  ),
-                  IconButton(
-                    tooltip: 'فتح',
-                    onPressed: () => _openDetails(a),
-                    icon: const Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      color: AC.hint,
-                      size: 17,
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: () => _run(
+                        () => ReportService.exportAll(c, a, round),
+                      ),
+                      icon: const Icon(Icons.file_copy_rounded, size: 18),
+                      label: const Text('تصدير الثلاثة معًا'),
                     ),
                   ),
                 ],
@@ -1005,7 +1037,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               ),
               SizedBox(height: 8),
               Text(
-                'تابع أعضاء جمعيتك ودفعاتهم وأدوارهم والتسليم، وأنشئ كشوفات ونسخًا احتياطية. التطبيق مجاني بالكامل.',
+                'تابع أعضاء جمعيتك ودفعاتهم وأدوارهم والتسليم، وأنشئ تقارير PDF وPNG وExcel ونسخًا احتياطية. التطبيق مجاني بالكامل.',
                 style: TextStyle(color: AC.muted, fontSize: 11, height: 1.65),
               ),
             ],
@@ -1155,55 +1187,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     await _openDetails(association);
   }
 
-  String _generalReport() {
-    final active = c.associations
-        .where((a) => c.stageOf(a) == AssociationStage.active)
-        .length;
-    final upcoming = c.associations
-        .where((a) => c.stageOf(a) == AssociationStage.upcoming)
-        .length;
-    final completed = c.associations
-        .where((a) => c.stageOf(a) == AssociationStage.completed)
-        .length;
-    return 'تقرير جمعيتي Pro\n'
-        '${DateFormat('yyyy/MM/dd').format(DateTime.now())}\n\n'
-        'نشطة: $active\n'
-        'قادمة: $upcoming\n'
-        'مكتملة: $completed\n'
-        'مؤرشفة: ${c.archivedAssociations.length}\n'
-        'بانتظار الدفع الآن: ${c.totalWaiting}\n'
-        'متأخرون الآن: ${c.totalLate}\n'
-        'المتوقع في الأدوار الجارية: ${ReportService.n(c.totalExpectedThisRound)} ${c.currency}\n'
-        'المحصل: ${ReportService.n(c.totalCollectedThisRound)} ${c.currency}';
-  }
-
-  String _lateReport() {
-    final b = StringBuffer(
-      'كشف المتأخرين - جمعيتي Pro\n${DateFormat('yyyy/MM/dd').format(DateTime.now())}\n',
-    );
-    var found = false;
-    for (final a in c.associations) {
-      if (c.stageOf(a) != AssociationStage.active) continue;
-      final round = c.displayRound(a);
-      final lateMembers = a.members
-          .where(
-            (m) =>
-                c.contributionStage(a, round, m) == ContributionStage.late,
-          )
-          .toList();
-      if (lateMembers.isEmpty) continue;
-      found = true;
-      b.writeln('\n${a.name} - الدور ${round + 1}');
-      for (final member in lateMembers) {
-        b.writeln(
-          '- ${member.name}: ${ReportService.n(a.amount)} ${c.currency}',
-        );
-      }
-    }
-    if (!found) b.writeln('\n✓ لا يوجد متأخرون حاليًا');
-    return b.toString();
-  }
-
   Future<void> _changeCurrency() async {
     final value = await showCurrencyPicker(context, current: c.currency);
     if (value == null || value.trim().isEmpty) return;
@@ -1300,11 +1283,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     } catch (e) {
       _msg('تعذر استعادة النسخة: $e');
     }
-  }
-
-  Future<void> _copy(String text) async {
-    await Clipboard.setData(ClipboardData(text: text));
-    _msg('✓ تم النسخ');
   }
 
   Future<void> _run(Future<void> Function() action) async {
